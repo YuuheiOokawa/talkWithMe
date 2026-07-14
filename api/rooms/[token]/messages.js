@@ -24,7 +24,7 @@ module.exports = withErrorHandling(async (req, res) => {
       [auth.room.id, since]
     );
     const { rows: others } = await db.query(
-      'SELECT last_seen FROM participants WHERE room_id = $1 AND id != $2',
+      'SELECT last_seen, display_name FROM participants WHERE room_id = $1 AND id != $2',
       [auth.room.id, auth.participant.id]
     );
     const partnerOnline = others.some(
@@ -35,6 +35,8 @@ module.exports = withErrorHandling(async (req, res) => {
       messages: rows.map(messageToJson),
       partnerJoined: others.length > 0,
       partnerOnline,
+      partnerName: others[0]?.display_name || null,
+      selfName: auth.participant.display_name,
     });
   }
 

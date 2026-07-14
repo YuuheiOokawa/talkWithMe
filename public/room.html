@@ -9,6 +9,17 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="room-body">
+  <!-- 名前入力(未ログイン端末で表示) -->
+  <div id="nameGate" class="name-gate hidden">
+    <div class="name-gate-box">
+      <h2>お名前を入力してください</h2>
+      <p class="note">初回参加時と同じ名前を入力すると、別の端末でも同じ人として続きを開けます。</p>
+      <input id="nameInput" type="text" maxlength="40" placeholder="例: たろう">
+      <button id="nameSubmit" class="btn-primary">参加する</button>
+      <p id="nameError" class="error-bar hidden"></p>
+    </div>
+  </div>
+
   <!-- 招待リンク案内（相手が未参加のときだけ表示） -->
   <div id="inviteBar" class="invite-bar hidden">
     <span>招待リンクを相手に送ってください:</span>
@@ -19,7 +30,7 @@
   <!-- 上: 相手のチャットエリア -->
   <section class="pane pane-partner">
     <header class="pane-header">
-      <span class="pane-title">相手</span>
+      <span id="partnerTitle" class="pane-title">相手</span>
       <span id="partnerStatus" class="status status-off">オフライン</span>
     </header>
     <div id="partnerMessages" class="messages"></div>
@@ -28,7 +39,7 @@
   <!-- 下: 自分のチャットエリア -->
   <section class="pane pane-self">
     <header class="pane-header">
-      <span class="pane-title">自分</span>
+      <span id="selfTitle" class="pane-title">自分</span>
       <span id="connStatus" class="status status-off">接続中...</span>
     </header>
     <div id="selfMessages" class="messages"></div>

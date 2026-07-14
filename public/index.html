@@ -18,8 +18,12 @@
       <ul id="pastRoomsList" class="room-list"></ul>
     </div>
 
+    <div class="name-field">
+      <label for="hostName">あなたの名前</label>
+      <input id="hostName" type="text" maxlength="40" placeholder="例: たろう">
+    </div>
     <button id="createBtn" class="btn-primary">新しいチャットルームを作成</button>
-    <p class="note">作成後に表示される招待リンクを相手に送ってください。<br>リンクを知っている1人だけが参加できます。</p>
+    <p class="note">作成後に表示される招待リンクを相手に送ってください。<br>リンクを知っている1人だけが参加できます。<br>ここで入力した名前を別の端末でも入力すると、同じ人として続きを開けます。</p>
   </div>
   <script src="/rooms-store.js"></script>
   <script>
@@ -39,7 +43,8 @@
         a.href = '/room/' + r.token;
         const role = document.createElement('span');
         role.className = 'room-role';
-        role.textContent = r.role === 'host' ? '自分が作成したチャット' : '招待されたチャット';
+        const kind = r.role === 'host' ? '自分が作成' : '招待された';
+        role.textContent = r.name ? `${r.name}（${kind}）` : `${kind}チャット`;
         const date = document.createElement('span');
         date.className = 'room-date';
         date.textContent = new Date(r.lastVisitedAt).toLocaleString('ja-JP', {
@@ -54,18 +59,34 @@
     }
     renderPastRooms();
 
+    const hostNameInput = document.getElementById('hostName');
+    hostNameInput.value = localStorage.getItem('twm:myname') || '';
+
     document.getElementById('createBtn').addEventListener('click', async () => {
+      const name = hostNameInput.value.trim();
+      if (!name) {
+        alert('お名前を入力してください');
+        hostNameInput.focus();
+        return;
+      }
       const btn = document.getElementById('createBtn');
       btn.disabled = true;
       try {
-        const res = await fetch('/api/rooms', { method: 'POST' });
+        const res = await fetch('/api/rooms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'ルーム作成に失敗しました');
         localStorage.setItem('twm:' + data.inviteToken, JSON.stringify({
           userToken: data.userToken,
           participantId: data.participantId,
           role: data.role,
+          displayName: data.displayName,
         }));
-        window.TwmRooms.upsertRoom({ token: data.inviteToken, role: data.role });
+        localStorage.setItem('twm:myname', name);
+        window.TwmRooms.upsertRoom({ token: data.inviteToken, role: data.role, name: data.displayName });
         location.href = data.roomUrl;
       } catch (e) {
         alert('ルーム作成に失敗しました: ' + e.message);

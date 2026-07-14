@@ -6,9 +6,15 @@
   const storeKey = 'twm:' + inviteToken;
 
   const el = {
+    nameGate: document.getElementById('nameGate'),
+    nameInput: document.getElementById('nameInput'),
+    nameSubmit: document.getElementById('nameSubmit'),
+    nameError: document.getElementById('nameError'),
     inviteBar: document.getElementById('inviteBar'),
     inviteLink: document.getElementById('inviteLink'),
     copyBtn: document.getElementById('copyBtn'),
+    partnerTitle: document.getElementById('partnerTitle'),
+    selfTitle: document.getElementById('selfTitle'),
     partnerStatus: document.getElementById('partnerStatus'),
     connStatus: document.getElementById('connStatus'),
     partnerMessages: document.getElementById('partnerMessages'),
@@ -33,23 +39,82 @@
   const encoder = new TextEncoder();
 
   // ---- 参加処理 ----
-  async function join() {
-    const saved = localStorage.getItem(storeKey);
-    const body = saved ? { userToken: JSON.parse(saved).userToken } : {};
+  async function requestJoin(body) {
     const res = await fetch(`/api/rooms/${inviteToken}/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const data = await res.json();
-    if (!res.ok) {
-      document.body.innerHTML =
-        `<div class="landing"><h1>参加できません</h1><p class="tagline">${data.error}</p></div>`;
-      throw new Error(data.error);
-    }
-    me = { userToken: data.userToken, participantId: data.participantId, role: data.role };
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  function showFatalError(text) {
+    document.body.innerHTML = `<div class="landing"><h1>参加できません</h1><p class="tagline">${text}</p></div>`;
+  }
+
+  function applyJoinResult(data) {
+    me = {
+      userToken: data.userToken,
+      participantId: data.participantId,
+      role: data.role,
+      displayName: data.displayName,
+    };
     localStorage.setItem(storeKey, JSON.stringify(me));
-    window.TwmRooms?.upsertRoom({ token: inviteToken, role: me.role });
+    localStorage.setItem('twm:myname', data.displayName || '');
+    window.TwmRooms?.upsertRoom({ token: inviteToken, role: me.role, name: me.displayName });
+    el.selfTitle.textContent = me.displayName || '自分';
+  }
+
+  function promptForName() {
+    return new Promise((resolve) => {
+      el.nameGate.classList.remove('hidden');
+      el.nameInput.value = localStorage.getItem('twm:myname') || '';
+      el.nameInput.focus();
+
+      async function submit() {
+        const name = el.nameInput.value.trim();
+        if (!name) {
+          el.nameError.textContent = 'お名前を入力してください';
+          el.nameError.classList.remove('hidden');
+          return;
+        }
+        el.nameSubmit.disabled = true;
+        const { ok, data } = await requestJoin({ name });
+        el.nameSubmit.disabled = false;
+        if (ok) {
+          applyJoinResult(data);
+          el.nameGate.classList.add('hidden');
+          el.nameSubmit.removeEventListener('click', submit);
+          resolve();
+        } else {
+          el.nameError.textContent = data.error || '参加に失敗しました';
+          el.nameError.classList.remove('hidden');
+        }
+      }
+      el.nameSubmit.addEventListener('click', submit);
+      el.nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); submit(); }
+      });
+    });
+  }
+
+  async function join() {
+    const saved = localStorage.getItem(storeKey);
+    if (saved) {
+      const { ok, data } = await requestJoin({ userToken: JSON.parse(saved).userToken });
+      if (ok) {
+        applyJoinResult(data);
+        return;
+      }
+    }
+    // ルームの存在だけ先に確認してから名前入力を出す
+    const probe = await requestJoin({});
+    if (probe.status === 404) {
+      showFatalError(probe.data.error);
+      throw new Error(probe.data.error);
+    }
+    await promptForName();
   }
 
   // ---- メッセージ描画 ----
@@ -103,6 +168,7 @@
       lastMessageId = Math.max(...data.messages.map((m) => m.id));
     }
     setPartnerStatus(data.partnerOnline);
+    el.partnerTitle.textContent = data.partnerName || '相手';
     if (data.partnerJoined) hasPartner = true;
     updateInviteBar();
   }
@@ -121,6 +187,7 @@
           lastMessageId = Math.max(lastMessageId, ...data.messages.map((m) => m.id));
         }
         setPartnerStatus(data.partnerOnline);
+        el.partnerTitle.textContent = data.partnerName || '相手';
         if (data.partnerJoined) hasPartner = true;
         updateInviteBar();
       } catch {
