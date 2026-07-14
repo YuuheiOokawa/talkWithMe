@@ -161,12 +161,17 @@
     return res.json();
   }
 
+  // 新着を画面に表示した=既読とみなし、トップページの未読バッジ算出用に既読位置を記録
+  function bumpLastMessageId(ids) {
+    if (ids.length === 0) return;
+    lastMessageId = Math.max(lastMessageId, ...ids);
+    window.TwmRooms?.markRead(inviteToken, lastMessageId);
+  }
+
   async function loadHistory() {
     const data = await fetchMessages(0);
     data.messages.forEach(renderMessage);
-    if (data.messages.length > 0) {
-      lastMessageId = Math.max(...data.messages.map((m) => m.id));
-    }
+    bumpLastMessageId(data.messages.map((m) => m.id));
     setPartnerStatus(data.partnerOnline);
     el.partnerTitle.textContent = data.partnerName || '相手';
     if (data.partnerJoined) hasPartner = true;
@@ -183,9 +188,7 @@
         const data = await fetchMessages(lastMessageId);
         setConn(true);
         data.messages.forEach(renderMessage);
-        if (data.messages.length > 0) {
-          lastMessageId = Math.max(lastMessageId, ...data.messages.map((m) => m.id));
-        }
+        bumpLastMessageId(data.messages.map((m) => m.id));
         setPartnerStatus(data.partnerOnline);
         el.partnerTitle.textContent = data.partnerName || '相手';
         if (data.partnerJoined) hasPartner = true;
@@ -250,7 +253,7 @@
         return;
       }
       renderMessage(data.message);
-      lastMessageId = Math.max(lastMessageId, data.message.id);
+      bumpLastMessageId([data.message.id]);
     } catch (e) {
       showError('送信に失敗しました: ' + e.message);
     }
@@ -269,7 +272,7 @@
         showError(data.error || '画像の送信に失敗しました');
       } else {
         renderMessage(data.message);
-        lastMessageId = Math.max(lastMessageId, data.message.id);
+        bumpLastMessageId([data.message.id]);
       }
     } catch (e) {
       showError('画像の送信に失敗しました: ' + e.message);

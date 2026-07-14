@@ -27,6 +27,35 @@
   </div>
   <script src="/rooms-store.js"></script>
   <script>
+    const BASE_TITLE = 'talkWithMe - 2人だけのチャット';
+
+    // 未読件数を取得(その部屋の自分のトークンで、既読位置以降の相手発言だけを数える)
+    async function fetchUnreadCount(room) {
+      const saved = localStorage.getItem('twm:' + room.token);
+      if (!saved) return 0;
+      let session;
+      try { session = JSON.parse(saved); } catch { return 0; }
+      if (!session.userToken) return 0;
+      try {
+        const res = await fetch(
+          `/api/rooms/${room.token}/messages?since=${room.lastReadId || 0}&user=${encodeURIComponent(session.userToken)}`
+        );
+        if (!res.ok) return 0;
+        const data = await res.json();
+        return data.messages.filter((m) => m.participantId !== session.participantId).length;
+      } catch {
+        return 0;
+      }
+    }
+
+    function updateTitleBadge() {
+      let total = 0;
+      document.querySelectorAll('.room-badge:not(.hidden)').forEach((b) => {
+        total += parseInt(b.textContent, 10) || 0;
+      });
+      document.title = total > 0 ? `(${total}) ${BASE_TITLE}` : BASE_TITLE;
+    }
+
     function renderPastRooms() {
       const rooms = window.TwmRooms.getRooms();
       const wrap = document.getElementById('pastRooms');
@@ -41,19 +70,37 @@
         const a = document.createElement('a');
         a.className = 'room-item';
         a.href = '/room/' + r.token;
+
         const role = document.createElement('span');
         role.className = 'room-role';
         const kind = r.role === 'host' ? '自分が作成' : '招待された';
         role.textContent = r.name ? `${r.name}（${kind}）` : `${kind}チャット`;
+
+        const meta = document.createElement('span');
+        meta.className = 'room-meta';
+        const badge = document.createElement('span');
+        badge.className = 'room-badge hidden';
         const date = document.createElement('span');
         date.className = 'room-date';
         date.textContent = new Date(r.lastVisitedAt).toLocaleString('ja-JP', {
           month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
         });
+        meta.appendChild(badge);
+        meta.appendChild(date);
+
         a.appendChild(role);
-        a.appendChild(date);
+        a.appendChild(meta);
         li.appendChild(a);
         list.appendChild(li);
+
+        fetchUnreadCount(r).then((count) => {
+          if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : String(count);
+            badge.classList.remove('hidden');
+            li.classList.add('has-unread');
+          }
+          updateTitleBadge();
+        });
       });
       wrap.classList.remove('hidden');
     }
