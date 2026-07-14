@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>talkWithMe - 2人だけのチャット</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="landing">
+    <h1>talkWithMe</h1>
+    <p class="tagline">招待リンクを知る2人だけのプライベートチャット</p>
+    <button id="createBtn" class="btn-primary">新しいチャットルームを作成</button>
+    <p class="note">作成後に表示される招待リンクを相手に送ってください。<br>リンクを知っている1人だけが参加できます。</p>
+  </div>
+  <script>
+    document.getElementById('createBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('createBtn');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/rooms', { method: 'POST' });
+        const data = await res.json();
+        localStorage.setItem('twm:' + data.inviteToken, JSON.stringify({
+          userToken: data.userToken,
+          participantId: data.participantId,
+          role: data.role,
+        }));
+        location.href = data.roomUrl;
+      } catch (e) {
+        alert('ルーム作成に失敗しました: ' + e.message);
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

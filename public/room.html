@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>talkWithMe - チャットルーム</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="room-body">
+  <!-- 招待リンク案内（相手が未参加のときだけ表示） -->
+  <div id="inviteBar" class="invite-bar hidden">
+    <span>招待リンクを相手に送ってください:</span>
+    <input id="inviteLink" readonly>
+    <button id="copyBtn">コピー</button>
+  </div>
+
+  <!-- 上: 相手のチャットエリア -->
+  <section class="pane pane-partner">
+    <header class="pane-header">
+      <span class="pane-title">相手</span>
+      <span id="partnerStatus" class="status status-off">オフライン</span>
+    </header>
+    <div id="partnerMessages" class="messages"></div>
+  </section>
+
+  <!-- 下: 自分のチャットエリア -->
+  <section class="pane pane-self">
+    <header class="pane-header">
+      <span class="pane-title">自分</span>
+      <span id="connStatus" class="status status-off">接続中...</span>
+    </header>
+    <div id="selfMessages" class="messages"></div>
+    <div class="composer">
+      <textarea id="input" placeholder="メッセージを入力（最大10,000文字 / 20,000バイト）" rows="3"></textarea>
+      <div class="composer-side">
+        <div id="counter" class="counter">0 / 10000文字<br>0 / 20000バイト</div>
+        <label class="btn-image" title="画像を送信">
+          📷
+          <input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+        </label>
+        <button id="sendBtn" class="btn-primary" disabled>送信</button>
+      </div>
+    </div>
+    <div id="errorBar" class="error-bar hidden"></div>
+  </section>
+
+  <!-- 画像拡大表示 -->
+  <div id="lightbox" class="lightbox hidden"><img id="lightboxImg" alt=""></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "talkwithme",
+  "version": "2.0.0",
+  "description": "2人用招待制チャットアプリ（Vercel Serverless Functions + PostgreSQL）",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "vercel": "^37.14.0"
+  }
+}
