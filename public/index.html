@@ -10,10 +10,48 @@
   <div class="landing">
     <h1>talkWithMe</h1>
     <p class="tagline">招待リンクを知る2人だけのプライベートチャット</p>
+
+    <div id="pastRooms" class="past-rooms hidden">
+      <h2>過去のチャット</h2>
+      <ul id="pastRoomsList" class="room-list"></ul>
+    </div>
+
     <button id="createBtn" class="btn-primary">新しいチャットルームを作成</button>
     <p class="note">作成後に表示される招待リンクを相手に送ってください。<br>リンクを知っている1人だけが参加できます。</p>
   </div>
+  <script src="/rooms-store.js"></script>
   <script>
+    function renderPastRooms() {
+      const rooms = window.TwmRooms.getRooms();
+      const wrap = document.getElementById('pastRooms');
+      const list = document.getElementById('pastRoomsList');
+      if (rooms.length === 0) {
+        wrap.classList.add('hidden');
+        return;
+      }
+      list.innerHTML = '';
+      rooms.forEach((r) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'room-item';
+        a.href = '/room/' + r.token;
+        const role = document.createElement('span');
+        role.className = 'room-role';
+        role.textContent = r.role === 'host' ? '自分が作成したチャット' : '招待されたチャット';
+        const date = document.createElement('span');
+        date.className = 'room-date';
+        date.textContent = new Date(r.lastVisitedAt).toLocaleString('ja-JP', {
+          month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+        });
+        a.appendChild(role);
+        a.appendChild(date);
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+      wrap.classList.remove('hidden');
+    }
+    renderPastRooms();
+
     document.getElementById('createBtn').addEventListener('click', async () => {
       const btn = document.getElementById('createBtn');
       btn.disabled = true;
@@ -25,6 +63,7 @@
           participantId: data.participantId,
           role: data.role,
         }));
+        window.TwmRooms.upsertRoom({ token: data.inviteToken, role: data.role });
         location.href = data.roomUrl;
       } catch (e) {
         alert('ルーム作成に失敗しました: ' + e.message);

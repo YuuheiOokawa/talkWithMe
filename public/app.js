@@ -49,6 +49,7 @@
     }
     me = { userToken: data.userToken, participantId: data.participantId, role: data.role };
     localStorage.setItem(storeKey, JSON.stringify(me));
+    window.TwmRooms?.upsertRoom({ token: inviteToken, role: me.role });
   }
 
   // ---- メッセージ描画 ----
