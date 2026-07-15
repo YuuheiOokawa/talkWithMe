@@ -2,6 +2,10 @@
 
 招待リンクを知る2人だけが使えるプライベートチャットアプリ。Vercel Serverless Functions + PostgreSQL で動作する。
 
+## 技術スタック
+
+Vercel Serverless Functions（Node.js） / PostgreSQL（`pg`） / バニラJavaScript・HTML・CSS（ビルド不要のフロントエンド） / Vercel CLI
+
 ## 特徴
 
 - **招待制**: ルーム作成者が発行した招待リンクを受け取った1人だけが参加可能（最大2人）
