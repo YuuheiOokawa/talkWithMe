@@ -36,7 +36,7 @@ Vercel Serverless Functions（Node.js） / PostgreSQL（`pg`） / バニラJavaS
 - `participants` — 参加者（host / guest、ユーザートークンで認証、`last_seen` でオンライン判定）
 - `messages` — メッセージ（text / image、画像はBYTEA + MIME）
 
-## ローカル開発
+## セットアップ
 
 1. PostgreSQL（[Neon](https://neon.tech) や [Vercel Postgres](https://vercel.com/storage/postgres) の無料枠でOK）を用意し、接続文字列を取得
 2. `.env.example` を `.env` にコピーして `DATABASE_URL` を設定
